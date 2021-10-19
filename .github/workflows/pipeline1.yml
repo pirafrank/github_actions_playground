@@ -1,0 +1,65 @@
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - dummy.sh
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: 'Build what? [base|bundle]'
+        required: true
+        default: 'base'
+
+jobs:
+  docker:
+    runs-on: ubuntu-20.04
+    env:
+      RUN_INFO: ''
+    steps:
+    - uses: actions/checkout@v2
+    - name: Print workdir
+      run: pwd
+    - name: Set run info
+      id: set_run_info
+      shell: bash
+      run: |
+        RUN_INFO=$(cat << EOF
+        Triggered by $GITHUB_EVENT_NAME
+        Action run on $RUNNER_OS by $RUNNER_NAME
+        Commit $GITHUB_SHA on $GITHUB_REF
+        EOF
+        )
+        echo "RUN_INFO<<EOF" >> $GITHUB_ENV
+        echo "$RUN_INFO" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+    - name: Show run info
+      run: |
+        echo "${{ env.RUN_INFO }}"
+    - name: Set date of today
+      id: today
+      shell: bash
+      run: echo "::set-output name=today::$(date '+%Y%m%d')"
+    - name: Extract branch name
+      id: extract_branch_name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+    - name: "Print Github Actions context variables"
+      id: 'gh_actions_ctx_vars'
+      shell: bash
+      run: |
+        echo "GITHUB_BASE_REF $GITHUB_BASE_REF"
+        echo "GITHUB_WORKFLOW $GITHUB_WORKFLOW"
+        echo "GITHUB_REF $GITHUB_REF"
+        echo "GITHUB_RUN_ID $GITHUB_RUN_ID"
+        echo "GITHUB_RUN_NUMBER $GITHUB_RUN_NUMBER"
+        echo "GITHUB_WORKSPACE $GITHUB_WORKSPACE"
+        echo "GITHUB_REPOSITORY $GITHUB_REPOSITORY"
+        echo "GITHUB_SERVER_URL $GITHUB_SERVER_URL"
+    - name: Send Push Notification
+      uses: fjogeleit/http-request-action@master
+      if: always()
+      with:
+        url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
+        method: 'POST'
+        data: '{ "value1": "[GitHub] {{ github.repository }}", "value2": "Build of branch ${{ steps.extract_branch_name.outputs.branch }} with target ${{ github.event.inputs.build_target }} finished with status ${{job.status}}.", "value3": "<br>Triggered by ${{ github.event_name }}. Action run on ${{ runner.os }} by ${{ runner.name }}. Commit ${{ github.sha }} on ${{ github.ref }}.<br>https://github.com/{{ github.repository }}/runs/${{ github.run_id }} <br> https://github.com/{{ github.repository }}/runs/${{ github.run_number }}" }'
