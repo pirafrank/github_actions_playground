@@ -62,4 +62,4 @@ jobs:
       with:
         url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
         method: 'POST'
-        data: '{ "value1": "[GitHub] ${{ github.repository }}", "value2": "Build of branch ${{ steps.extract_branch_name.outputs.branch }} with target ${{ github.event.inputs.build_target }} finished with status ${{job.status}}.", "value3": "<br>Triggered by ${{ github.event_name }}. Action run on ${{ runner.os }} by ${{ runner.name }}. Commit ${{ github.sha }} on ${{ github.ref }}.<br>https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} <br> https://github.com/${{ github.repository }}/actions/runs/${{ github.run_number }}" }'
+        data: '{ "value1": "[GitHub] ${{ github.repository }}", "value2": "Build of branch ${{ steps.extract_branch_name.outputs.branch }} with target &lsquo;${{ github.event.inputs.build_target }}&rsquo; finished with status ${{job.status}}.", "value3": "<br>Workflow: ${{ github.workflow }} triggered by ${{ github.event_name }}.<br>Action run on ${{ runner.os }} by ${{ runner.name }}.<br>Commit ${{ github.sha }} on ${{ github.ref }}.<br>https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" }'
