@@ -61,6 +61,14 @@ jobs:
       shell: bash
       run: |
         curl -L fpira.com
+    - name: "Look for jq and yq"
+      id: "look_for_yq"
+      shell: bash
+      run: |
+        command -v jq
+        which jq
+        command -v yq
+        which yq
     - name: Send Push Notification
       uses: fjogeleit/http-request-action@master
       #if: always()
