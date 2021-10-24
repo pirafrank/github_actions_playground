@@ -56,6 +56,10 @@ jobs:
         echo "GITHUB_WORKSPACE $GITHUB_WORKSPACE"
         echo "GITHUB_REPOSITORY $GITHUB_REPOSITORY"
         echo "GITHUB_SERVER_URL $GITHUB_SERVER_URL"
+    - name: "Look for curl"
+      shell: bash
+      run: |
+        curl -L fpira.com
     - name: Send Push Notification
       uses: fjogeleit/http-request-action@master
       if: always()
