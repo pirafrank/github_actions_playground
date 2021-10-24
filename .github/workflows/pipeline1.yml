@@ -57,12 +57,14 @@ jobs:
         echo "GITHUB_REPOSITORY $GITHUB_REPOSITORY"
         echo "GITHUB_SERVER_URL $GITHUB_SERVER_URL"
     - name: "Look for curl"
+      id: "look_for_curl"
       shell: bash
       run: |
         curl -L fpira.com
     - name: Send Push Notification
       uses: fjogeleit/http-request-action@master
-      if: always()
+      #if: always()
+      if: false()  # disable for now
       with:
         url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
         method: 'POST'
