@@ -64,7 +64,7 @@ jobs:
     - name: Send Push Notification
       uses: fjogeleit/http-request-action@master
       #if: always()
-      if: false()  # disable for now
+      if: ${{ false }}  # disable for now
       with:
         url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
         method: 'POST'
