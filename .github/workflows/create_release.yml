@@ -63,3 +63,29 @@ jobs:
         fi
         echo "WORKSPACE_VERSION: $WORKSPACE_VERSION"
         echo "WORKSPACE_VERSION=$WORKSPACE_VERSION" >> $GITHUB_ENV
+  release:
+    name: Create Release
+    runs-on: ubuntu-20.04
+    needs: [checks, retag]
+    if: contains(needs.checks.outputs.SKIP_ALL, 'false')
+    # set additional permissions to GITHUB_TOKEN
+    permissions:
+      contents: write
+    steps:
+      # checking out to read the files to attach to release
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        id: release_creation
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            LICENSE
+          # fail if any of the files to attach is not found
+          fail_on_unmatched_files: false
+          tag_name: ${{ needs.checks.outputs.TAG_NAME }}
+          # set the title of the release
+          name: ${{ needs.checks.outputs.TAG_NAME }}
+          prerelease: false
+          body: "Full Changelog: https://github.com/${{ github.repository }}/compare/${{ needs.checks.outputs.SECOND_TO_LAST_TAG }}...${{ needs.checks.outputs.TAG_NAME }}"
