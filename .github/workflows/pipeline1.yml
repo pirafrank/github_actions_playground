@@ -85,7 +85,7 @@ jobs:
       name: Check if tag exists
       id: checkTag
       with:
-        tag: ${{ env.WORKSPACE_VERSION }}
+        tag: ${{ env.WORKSPACE_VERSION }}+${{ steps.extract_short_hash.outputs.currentcommit }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - run: echo ${{ steps.checkTag.outputs.exists }}
