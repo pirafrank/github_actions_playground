@@ -77,8 +77,16 @@ jobs:
         which jq
         command -v yq
         which yq
+    - uses: mukunku/tag-exists-action@v1.0.0
+      name: Check if tag exists
+      id: checkTag
+      with:
+        tag: ${{ env.WORKSPACE_VERSION }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
     - name: Create lightweight git tag
       uses: actions/github-script@v3
+      if: ${{ steps.checkTag.outputs.exists }} != 'true'
       with:
         github-token: ${{ github.token }}
         script: |
