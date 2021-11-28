@@ -98,7 +98,7 @@ jobs:
           github.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            ref: "refs/tags/${{ env.WORKSPACE_VERSION }}+${{ step.extract_short_hash.outputs.currentcommit }}",
+            ref: "refs/tags/${{ env.WORKSPACE_VERSION }}+${{ steps.extract_short_hash.outputs.currentcommit }}",
             sha: context.sha
           })
     - name: Send Push Notification
