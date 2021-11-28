@@ -1,0 +1,65 @@
+name: 'Create release'
+
+on:
+  push:
+    tags:
+      - '[1-9]+.[0-9]+.[0-9]'
+  workflow_dispatch:
+
+jobs:
+  checks:
+    name: Check latest tag and release
+    runs-on: ubuntu-20.04
+    outputs:
+      SKIP_ALL: ${{ steps.check_if_tag_is_latest.outputs.SKIP_ALL }}
+      SECOND_TO_LAST_TAG: ${{ steps.check_if_tag_is_latest.outputs.SECOND_TO_LAST_TAG }}
+      TAG_NAME: ${{ steps.check_if_tag_is_latest.outputs.TAG_NAME }}
+    steps:
+      - name: Check if tag is latest
+        id: check_if_tag_is_latest
+        shell: bash
+        run: |
+          LATEST_TAG=$(curl -sL https://api.github.com/repos/pirafrank/workspace/tags | \
+            jq -r '.[].name' | sort -V | tail -n1)
+          LATEST_RELEASE=$(curl -sL https://api.github.com/repos/pirafrank/workspace/releases | \
+            jq -r '.[].tag_name' | sort -V | tail -n1)
+          SECOND_TO_LAST_TAG=$(curl -sL https://api.github.com/repos/pirafrank/workspace/tags | \
+            jq -r '.[].name' | sort -V | tail -n2 | head -n1)
+
+          echo "Current pushed tag: ${GITHUB_REF##*/}"
+          echo "Last pushed tag: ${LATEST_TAG}"
+          echo "Last release: ${LATEST_RELEASE}"
+
+          if [ ${LATEST_TAG} != ${GITHUB_REF##*/} ]; then
+            printf "\n\nPushed tag is not the newest in semantic versioning. Nothing to do\n\n"
+            echo '::set-output name=SKIP_ALL::true'
+            exit 0
+          fi
+
+          if [ ${LATEST_TAG} = ${LATEST_RELEASE} ]; then
+            printf "\n\nLatest pushed tag has already been released. Nothing to do\n\n"
+            echo '::set-output name=SKIP_ALL::true'
+            exit 0
+          fi
+
+          echo "Version mismatch: creating release for $LATEST_TAG"
+
+          echo "SECOND_TO_LAST_TAG: $SECOND_TO_LAST_TAG"
+
+          echo '::set-output name=SKIP_ALL::false'
+          echo '::set-output name=SECOND_TO_LAST_TAG::${SECOND_TO_LAST_TAG}'
+          echo '::set-output name=TAG_NAME::${LATEST_TAG}'
+  retag:
+    name: Retag Docker images
+    runs-on: ubuntu-20.04
+    needs: [checks]
+    if: contains(needs.checks.outputs.SKIP_ALL, 'false')
+    steps:
+    - name: Extract git tag
+      shell: bash
+      run: |
+        if [[ ${GITHUB_REF} == refs/tags/* ]]; then
+          WORKSPACE_VERSION="${GITHUB_REF##*/}"
+        fi
+        echo "WORKSPACE_VERSION: $WORKSPACE_VERSION"
+        echo "WORKSPACE_VERSION=$WORKSPACE_VERSION" >> $GITHUB_ENV
