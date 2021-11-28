@@ -77,6 +77,10 @@ jobs:
         which jq
         command -v yq
         which yq
+    - name: Extract short commit hash
+      id: extract_short_hash
+      shell: bash
+      run:  echo "##[set-output name=currentcommit;]$(git rev-parse --short HEAD)"
     - uses: mukunku/tag-exists-action@v1.0.0
       name: Check if tag exists
       id: checkTag
@@ -84,6 +88,7 @@ jobs:
         tag: ${{ env.WORKSPACE_VERSION }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - run: echo ${{ steps.checkTag.outputs.exists }}
     - name: Create a lightweight git tag
       uses: actions/github-script@v3
       if: (${{ steps.checkTag.outputs.exists }} != 'true') && (github.ref == 'refs/heads/main')
@@ -93,7 +98,7 @@ jobs:
           github.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            ref: "refs/tags/${{ env.WORKSPACE_VERSION }}",
+            ref: "refs/tags/${{ env.WORKSPACE_VERSION }}+${{ step.extract_short_hash.outputs.currentcommit }}",
             sha: context.sha
           })
     - name: Send Push Notification
