@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: |
           LATEST_TAG=$(curl -sL https://api.github.com/repos/pirafrank/github_actions_playground/tags | \
-            jq -r '.[].name' | sort -V | tail -n1)
+            jq -r '.[].name' | grep -E '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n1)
           LATEST_RELEASE=$(curl -sL https://api.github.com/repos/pirafrank/workspace/releases | \
             jq -r '.[].tag_name' | grep -E '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n1)
           SECOND_TO_LAST_TAG=$(curl -sL https://api.github.com/repos/pirafrank/github_actions_playground/tags | \
