@@ -83,7 +83,7 @@ jobs:
       with:
         tag: ${{ env.WORKSPACE_VERSION }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Create lightweight git tag
       uses: actions/github-script@v3
       if: ${{ steps.checkTag.outputs.exists }} != 'true'
