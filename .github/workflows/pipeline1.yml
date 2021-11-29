@@ -26,6 +26,8 @@ jobs:
         ref: ${{ github.event.inputs.reference }}
     - name: Print workdir
       run: pwd
+    - run: |
+        echo "This is the event: $GITHUB_EVENT_NAME"
     - name: Set run info
       id: set_run_info
       shell: bash
