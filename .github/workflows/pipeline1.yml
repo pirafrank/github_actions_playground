@@ -2,6 +2,8 @@ on:
   push:
     branches:
       - main
+      - develop
+      - test
     paths:
       - dummy.sh
   workflow_dispatch:
@@ -103,11 +105,21 @@ jobs:
             ref: "refs/tags/${{ env.WORKSPACE_VERSION }}+${{ steps.extract_short_hash.outputs.currentcommit }}",
             sha: context.sha
           })
+    - name: Get vercel args
+      id: get_vercel_args
+      shell: bash
+      run: |
+        if [ ${GITHUB_REF} == 'refs/heads/main' ]; then
+          echo "::set-output name=VERCEL_ARGS::$(printf '--prod')"
+        else
+          echo "::set-output name=VERCEL_ARGS::$(printf '')"
+        fi
     - name: Send Push Notification
       uses: fjogeleit/http-request-action@master
       #if: always()
-      if: ${{ false }}  # disable for now
+      #if: ${{ false }}  # disable for now
+      if: ${{ always() && (github.ref == format('refs/heads/{0}', 'main')) }}
       with:
         url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
         method: 'POST'
-        data: '{ "value1": "[GitHub] ${{ github.repository }}", "value2": "Build of branch ${{ steps.extract_branch_name.outputs.branch }} with target &quot;${{ github.event.inputs.build_target }}&quot; finished with status ${{job.status}}.", "value3": "<br>Workflow &quot;${{ github.workflow }}&quot; triggered by &quot;${{ github.event_name }}&quot;.<br>Action run on ${{ runner.os }} by ${{ runner.name }}.<br>Commit ${{ github.sha }} on ${{ github.ref }}.<br>https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" }'
+        data: '{ "value1": "[GitHub] ${{ github.repository }}", "value2": "vercel args: ${{ steps.get_vercel_args.outputs.VERCEL_ARGS }}<br>Build of branch ${{ steps.extract_branch_name.outputs.branch }} with target &quot;${{ github.event.inputs.build_target }}&quot; finished with status ${{job.status}}.", "value3": "<br>Workflow &quot;${{ github.workflow }}&quot; triggered by &quot;${{ github.event_name }}&quot;.<br>Action run on ${{ runner.os }} by ${{ runner.name }}.<br>Commit ${{ github.sha }} on ${{ github.ref }}.<br>https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" }'
