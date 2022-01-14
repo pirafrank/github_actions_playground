@@ -109,10 +109,10 @@ jobs:
       id: get_vercel_args
       shell: bash
       run: |
-        if [ ${GITHUB_REF} == 'refs/heads/main' ]; then
-          echo "::set-output name=VERCEL_ARGS::$(printf '--prod')"
+        if [ ${GITHUB_REF#refs/heads/} == 'main' ]; then
+          echo "::set-output name=VERCEL_ARGS::$(echo '--prod')"
         else
-          echo "::set-output name=VERCEL_ARGS::$(printf '')"
+          echo "::set-output name=VERCEL_ARGS::$(echo '')"
         fi
     - name: Send Push Notification
       uses: fjogeleit/http-request-action@master
