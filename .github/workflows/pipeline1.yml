@@ -26,19 +26,34 @@ jobs:
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.inputs.reference }}
-    - name: Show current branch
-      run: |
-        git rev-parse --abbrev-ref HEAD
     - name: Get current ref (branch name or commit id)
       id: get_current_ref
       shell: bash
       run: |
-        if [ "$(git rev-parse --abbrev-ref HEAD)" == 'HEAD' ]; then
-          # case detached HEAD
-          echo "::set-output name=REF::$(git rev-parse --short HEAD)"
+        # workflow_dispatch issue: $GITHUB_REF is set to the default branch,
+        # even if actions/checkout@v2 checkouts to a different ref
+        if [ $GITHUB_EVENT_NAME == 'workflow_dispatch' ]; then
+          if [ "$(git rev-parse --abbrev-ref HEAD)" == 'HEAD' ]; then
+            # case detached HEAD
+            REF="$(git rev-parse --short HEAD)"
+          else
+            # HEAD pointing to a branch
+            REF="$(git rev-parse --abbrev-ref HEAD)"
+          fi
         else
-          # HEAD pointing to a branch
-          echo "::set-output name=REF::$(git rev-parse --abbrev-ref HEAD)"
+          REF="${GITHUB_REF#refs/heads/}"
+        fi
+        # set as step output and as env
+        echo "::set-output name=REF::${REF}"
+        echo "GIT_REF=${REF}" >> $GITHUB_ENV
+    - name: Get vercel args
+      id: get_vercel_args
+      shell: bash
+      run: |
+        if [ ${{ env.GIT_REF }} == 'main' ]; then
+          echo "::set-output name=VERCEL_ARGS::$(echo '--prod')"
+        else
+          echo "::set-output name=VERCEL_ARGS::$(echo '')"
         fi
     - name: Print workdir
       run: pwd
@@ -60,6 +75,7 @@ jobs:
     - name: Show run info
       run: |
         echo "${{ env.RUN_INFO }}"
+        echo "${{ env.GIT_REF }}"
     - name: Set date of today
       id: today
       shell: bash
@@ -136,4 +152,4 @@ jobs:
       with:
         url: ${{ secrets.NOTIFICATION_WEBHOOK_URI }}
         method: 'POST'
-        data: '{ "value1": "[GitHub] ${{ github.repository }}", "value2": "vercel args: ${{ steps.get_vercel_args.outputs.VERCEL_ARGS }}<br>Build of branch ${{ steps.extract_branch_name.outputs.branch }} with target &quot;${{ github.event.inputs.build_target }}&quot; finished with status ${{job.status}}.", "value3": "<br>Workflow &quot;${{ github.workflow }}&quot; triggered by &quot;${{ github.event_name }}&quot;.<br>Action run on ${{ runner.os }} by ${{ runner.name }}.<br>Commit ${{ github.sha }} on ${{ github.ref }}.<br>https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" }'
+        data: '{ "value1": "[GitHub] ${{ github.repository }}", "value2": "vercel args: ${{ steps.get_vercel_args.outputs.VERCEL_ARGS }}<br>Build of branch ${{ steps.extract_branch_name.outputs.branch }} with target &quot;${{ github.event.inputs.build_target }}&quot; finished with status ${{job.status}}.", "value3": "<br>Workflow &quot;${{ github.workflow }}&quot; triggered by &quot;${{ github.event_name }}&quot;.<br>Action run on ${{ runner.os }} by ${{ runner.name }}.<br>Commit ${{ github.sha }} on ${{ env.GIT_REF }}.<br>https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" }'
