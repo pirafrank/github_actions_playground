@@ -135,15 +135,6 @@ jobs:
             ref: "refs/tags/${{ env.WORKSPACE_VERSION }}+${{ steps.extract_short_hash.outputs.currentcommit }}",
             sha: context.sha
           })
-    - name: Get vercel args
-      id: get_vercel_args
-      shell: bash
-      run: |
-        if [ ${{ steps.get_current_ref.outputs.REF }} == 'main' ]; then
-          echo "::set-output name=VERCEL_ARGS::$(echo '--prod')"
-        else
-          echo "::set-output name=VERCEL_ARGS::$(echo '')"
-        fi
     - name: Send Push Notification
       uses: fjogeleit/http-request-action@master
       #if: always()
