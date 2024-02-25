@@ -18,18 +18,19 @@ jobs:
       - name: Commit and push if changes
         env:
           PUBLISH_TO_POSTS: ${{ env.PUBLISH_TO_POSTS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DESTINATION_BRANCH: main
         run: |
           mkdir -p test
           echo "test" > test/file.txt
 
-          curl -sSL 'https://github.com/pirafrank/fpiracom/raw/main/CNAME' --output CNAME
-          DOMAIN=$(cat CNAME | head -n 1)
-          EML="$(printf def | sed 's/f/v/' | sed "s/$/@${DOMAIN}/")"
-          git config --local user.email "$EML"
-          git config --local user.name 'Francesco Pira'
-
-          git add test/file.txt
-          git commit -S -m "New test"
-          
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-          git push origin main
+          export TODAY=$( date -u '+%Y-%m-%d' )
+          export FILE_TO_COMMIT="test/file.txt"
+          export MESSAGE="chore: regenerate $FILE_TO_COMMIT for $TODAY"
+          export SHA=$( git rev-parse $DESTINATION_BRANCH:$FILE_TO_COMMIT )
+          gh api --method PUT /repos/:owner/:repo/contents/$FILE_TO_COMMIT \
+            --field message="$MESSAGE" \
+            --field content=@<( base64 -i $FILE_TO_COMMIT ) \
+            --field encoding="base64" \
+            --field branch="$DESTINATION_BRANCH" \
+            --field sha="$SHA"
